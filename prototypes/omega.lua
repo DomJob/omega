@@ -209,7 +209,7 @@ local omega_transmuter = {
     name = "omega-transmuter",
     icon = omega_transmuter_icon,
     icon_size = 64,
-    flags = {"placeable-player", "player-creation", "not-rotatable"},
+    flags = {"placeable-player", "player-creation"},
     minable = {
         mining_time = 0.2,
         result = "omega-transmuter"
@@ -248,7 +248,7 @@ local omega_transmuter = {
         pipe_connections = {{
             flow_direction = "input",
             direction = defines.direction.north,
-            position = {0, -0.4}
+            position = {0, -0.5}
         }},
         volume = 100,
         base_area = 50,
@@ -259,7 +259,7 @@ local omega_transmuter = {
         pipe_connections = {{
             flow_direction = "output",
             direction = defines.direction.south,
-            position = {0, 0.4}
+            position = {0, 0.5}
         }},
         volume = 1000,
         base_area = 50,
