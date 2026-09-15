@@ -1,0 +1,11 @@
+{
+  "name": "omega",
+  "version": "1.0.0",
+  "title": "Omega",
+  "author": "DomJob",
+  "description": "An everything-from-nothing mod built around a central Omega device that generates raw materials from empty grass.",
+  "factorio_version": "2.1",
+  "dependencies": [
+    "base >= 2.1.0"
+  ]
+}
