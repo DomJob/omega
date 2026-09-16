@@ -79,7 +79,7 @@ local omega_machine = {
     fluid_boxes = {{
         production_type = "output",
         volume = 1000,
-        pipe_connections = omega_machine_pipe_connections()
+        pipe_connections = omega_machine_pipe_connections(),
     }},
     graphics_set = {
         animation = {
@@ -126,14 +126,14 @@ local omega_recipe = {
     categories = {"omega"},
     enabled = true,
     hidden = true,
-    energy_required = 3,
+    energy_required = 1,
     allow_productivity = true,
     maximum_productivity = 1000000,
     ingredients = {},
     results = {{
         type = "fluid",
         name = "omega-fluid",
-        amount = 500
+        amount = 100
     }},
     icon = omega_fluid_icon,
     icon_size = 64,
