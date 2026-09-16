@@ -64,8 +64,8 @@ local omega_lab = {
             direction = defines.direction.south,
             position = {0, 1}
         }},
-        volume = 10000,
-        pipe_covers = pipecoverspictures()
+        volume = 10000
+        --pipe_covers = pipecoverspictures()
     }},
     graphics_set = {
         animation = lab_animation

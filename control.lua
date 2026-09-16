@@ -149,8 +149,8 @@ end)
 local OMEGA_LAB_NAME = "omega-lab"
 local OMEGA_MACHINE_NAME = "omega-machine"
 local OMEGA_MACHINE_RECIPE = "omega-output"
-local POLL_INTERVAL = 60 -- ticks (1 second) instead of checking every tick
-local PRODUCTIVITY_BONUS_PER_CYCLE = 0.1
+local POLL_INTERVAL = 60
+local PRODUCTIVITY_BONUS_PER_CYCLE = 0.01
 
 local function register_omega_lab(entity)
     if not (entity and entity.valid) then return end
