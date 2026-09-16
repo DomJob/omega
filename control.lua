@@ -146,3 +146,97 @@ script.on_event(defines.events.on_chunk_generated, function(event)
   end
 end)
 
+local OMEGA_LAB_NAME = "omega-lab"
+local OMEGA_MACHINE_NAME = "omega-machine"
+local OMEGA_MACHINE_RECIPE = "omega-output"
+local POLL_INTERVAL = 60 -- ticks (1 second) instead of checking every tick
+local PRODUCTIVITY_BONUS_PER_CYCLE = 0.1
+
+local function register_omega_lab(entity)
+    if not (entity and entity.valid) then return end
+    storage.omega_labs = storage.omega_labs or {}
+    storage.omega_labs[entity.unit_number] = {
+        entity = entity,
+        last_count = entity.products_finished
+    }
+end
+
+local function unregister_omega_lab(entity)
+    if entity and storage.omega_labs then
+        storage.omega_labs[entity.unit_number] = nil
+    end
+end
+
+local build_filter = {{filter = "name", name = OMEGA_LAB_NAME}}
+local mine_filter = {{filter = "name", name = OMEGA_LAB_NAME}}
+
+local function on_lab_built(event)
+    register_omega_lab(event.entity)
+end
+
+local function on_lab_removed(event)
+    unregister_omega_lab(event.entity)
+end
+
+script.on_event(defines.events.on_built_entity, on_lab_built, build_filter)
+script.on_event(defines.events.on_robot_built_entity, on_lab_built, build_filter)
+script.on_event(defines.events.script_raised_built, on_lab_built, build_filter)
+
+script.on_event(defines.events.on_player_mined_entity, on_lab_removed, mine_filter)
+script.on_event(defines.events.on_robot_mined_entity, on_lab_removed, mine_filter)
+script.on_event(defines.events.on_entity_died, on_lab_removed, mine_filter)
+
+-- The omega-machine is a unique, fixed, not-rotatable entity, so we only
+-- ever need to find it once and cache it.
+local function get_omega_machine()
+    local machine = storage.omega_machine
+    if machine and machine.valid then
+        return machine
+    end
+    for _, surface in pairs(game.surfaces) do
+        local found = surface.find_entities_filtered({name = OMEGA_MACHINE_NAME, limit = 1})[1]
+        if found then
+            storage.omega_machine = found
+            return found
+        end
+    end
+end
+
+local function grant_research_bonus(cycles_completed)
+    local machine = get_omega_machine()
+    if not machine then return end
+
+    local recipe = machine.force.recipes[OMEGA_MACHINE_RECIPE]
+    if recipe then
+        recipe.productivity_bonus = recipe.productivity_bonus + PRODUCTIVITY_BONUS_PER_CYCLE * cycles_completed
+    end
+end
+
+script.on_nth_tick(POLL_INTERVAL, function()
+    local labs = storage.omega_labs
+    if not labs then return end
+
+    for unit_number, lab in pairs(labs) do
+        if lab.entity.valid then
+            local current = lab.entity.products_finished
+            if current > lab.last_count then
+                grant_research_bonus(current - lab.last_count)
+                lab.last_count = current
+            end
+        else
+            labs[unit_number] = nil
+        end
+    end
+end)
+
+local function scan_for_existing_labs()
+    storage.omega_labs = storage.omega_labs or {}
+    for _, surface in pairs(game.surfaces) do
+        for _, entity in pairs(surface.find_entities_filtered({name = OMEGA_LAB_NAME})) do
+            register_omega_lab(entity)
+        end
+    end
+end
+
+script.on_init(scan_for_existing_labs)
+script.on_configuration_changed(scan_for_existing_labs)
