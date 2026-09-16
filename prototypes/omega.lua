@@ -358,6 +358,9 @@ for _, recipe in ipairs(omega_transmuter_recipes) do
     if recipe.results[1].type == "item" then
         table.insert(recipe.categories, "crafting-with-fluid")
     end
+    if recipe.results[1].type == "fluid" then
+        table.insert(recipe.categories, "chemistry")
+    end
 end
 
 local omega_uranium_recipe = {
