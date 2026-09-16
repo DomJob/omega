@@ -52,11 +52,8 @@ local omega_lab = {
     allowed_effects = {"speed", "productivity"},
     show_recipe_icon = false,
     show_recipe_icon_on_map = false,
-    -- Void source: no power/fuel hookup needed, keeps this as simple as
-    -- possible. Timing is entirely controlled by energy_required on the
-    -- recipe below.
     energy_source = {
-        type = "void"
+        type = "electric"
     },
     energy_usage = "60kW",
     fluid_boxes = {{
@@ -89,15 +86,19 @@ local omega_lab_craft_recipe = {
     type = "recipe",
     name = "omega-lab",
     enabled = true,
-    energy_required = 2,
+    energy_required = 10,
     ingredients = {{
         type = "item",
-        name = "iron-plate",
-        amount = 30
+        name = "iron-gear-wheel",
+        amount = 15
     }, {
         type = "item",
         name = "copper-plate",
         amount = 10
+    }, {
+        type = "item",
+        name = "lab",
+        amount = 1
     }},
     results = {{
         type = "item",
