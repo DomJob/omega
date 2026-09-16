@@ -49,7 +49,7 @@ local omega_lab = {
     crafting_speed = 1,
     ingredient_count = 1,
     module_slots = 3,
-    allowed_effects = {},
+    allowed_effects = {"speed", "productivity"},
     show_recipe_icon = false,
     show_recipe_icon_on_map = false,
     -- Void source: no power/fuel hookup needed, keeps this as simple as
