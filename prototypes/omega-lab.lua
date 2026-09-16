@@ -53,7 +53,8 @@ local omega_lab = {
     show_recipe_icon = false,
     show_recipe_icon_on_map = false,
     energy_source = {
-        type = "electric"
+        type = "electric",
+        usage_priority = "secondary-input"
     },
     energy_usage = "60kW",
     fluid_boxes = {{
@@ -126,6 +127,11 @@ local omega_lab_research_recipe = {
     icon_size = 64,
     hide_from_player_crafting = true
 }
+
+table.insert(data.raw.technology["automation"].effects, {
+    type = "unlock-recipe",
+    recipe = "omega-lab"
+})
 
 data:extend({omega_lab_recipe_category, omega_lab, omega_lab_item, omega_lab_craft_recipe,
              omega_lab_research_recipe})
