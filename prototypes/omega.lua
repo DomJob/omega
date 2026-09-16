@@ -63,19 +63,16 @@ local omega_machine = {
     name = "omega-machine",
     icon = omega_icon,
     icon_size = 64,
-    -- No minable property + not-deconstructable => cannot be mined, deconstructed or removed.
     flags = {"placeable-neutral", "player-creation", "not-deconstructable", "not-rotatable", "not-upgradable"},
     max_health = 2000,
-    -- Asymmetric: the sprite's smokestack pokes up further than the main frame, and the
-    -- frame itself sits inset from the left/right edges of the (transparent-padded) image.
     collision_box = {{-8, -7}, {8, 8}},
-    selection_box = {{-7, -6}, {7, 7}},
+    selection_box = {{-8, -7}, {8, 8}},
     tile_width = 15,
     tile_height = 15,
     crafting_categories = {"omega"},
     fixed_recipe = "omega-output",
     crafting_speed = 1,
-    module_slots = 10,
+    module_slots = 0,
     allowed_effects = {"productivity"},
     ignore_output_full = false,
     show_recipe_icon = false,
@@ -100,7 +97,8 @@ local omega_machine = {
             scale = 1
         }
     },
-    resistances = {{
+    resistances = {
+      {
         type = "fire",
         percent = 100
     }, {
@@ -109,7 +107,8 @@ local omega_machine = {
     }, {
         type = "impact",
         percent = 100
-    }}
+    }
+  }
 }
 
 local omega_item = {
@@ -217,8 +216,6 @@ local omega_transmuter = {
     max_health = 250,
     corpse = "small-remnants",
     dying_explosion = "medium-explosion",
-    -- Symmetric box matching the declared 1x2 tile footprint exactly (unlike vanilla
-    -- offshore-pump's off-center box), so fluid connection rotation math stays correct.
     collision_box = {{-0.4, -0.9}, {0.4, 0.9}},
     selection_box = {{-0.5, -1}, {0.5, 1}},
     tile_width = 1,
