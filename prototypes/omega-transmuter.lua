@@ -225,7 +225,7 @@ table.insert(data.raw.technology["uranium-processing"].effects, {
     recipe = "omega-transmute-uranium-ore"
 })
 
-table.insert(data.raw.technology["oil-processing"].effects, {
+table.insert(data.raw.technology["oil-gathering"].effects, {
     type = "unlock-recipe",
     recipe = "omega-transmute-crude-oil"
 })
