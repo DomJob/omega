@@ -18,18 +18,6 @@ local function ensure_omega_device(surface)
   end
 end
 
-local PRODUCTIVITY_PER_MINUTE = 0.01
-
-local function apply_productivity()
-  local bonus = storage.omega_productivity or 0
-  for _, force in pairs(game.forces) do
-    local recipe = force.recipes["omega-output"]
-    if recipe then
-      recipe.productivity_bonus = bonus
-    end
-  end
-end
-
 local function prepare_surface(surface)
   if not surface then
     return
@@ -97,9 +85,6 @@ end
 script.on_init(function()
   disable_freeplay_gifts()
 
-  storage.omega_productivity = 0
-  apply_productivity()
-
   for _, surface in pairs(game.surfaces) do
     prepare_surface(surface)
   end
@@ -117,9 +102,6 @@ end)
 
 script.on_configuration_changed(function(event)
   disable_freeplay_gifts()
-
-  storage.omega_productivity = storage.omega_productivity or 0
-  apply_productivity()
 
   -- Only reset players on a fresh install of this mod, not on every version bump/reload.
   local changes = event and event.mod_changes and event.mod_changes["omega"]
@@ -140,12 +122,6 @@ script.on_event(defines.events.on_player_created, function(event)
   end
   ensure_omega_device(player.surface)
   setup_player(player)
-end)
-
--- 3600 ticks = 1 minute at 60 UPS.
-script.on_nth_tick(3600, function()
-  storage.omega_productivity = (storage.omega_productivity or 0) + PRODUCTIVITY_PER_MINUTE
-  apply_productivity()
 end)
 
 script.on_event(defines.events.on_chunk_generated, function(event)
@@ -169,3 +145,5 @@ script.on_event(defines.events.on_chunk_generated, function(event)
     end
   end
 end)
+
+require("omega-pid.lua")

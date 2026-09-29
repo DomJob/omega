@@ -53,7 +53,7 @@ local omega_transmuter = {
     tile_width = base_offshore_pump.tile_width,
     tile_height = base_offshore_pump.tile_height,
     crafting_categories = {"omega-transmuter"},
-    crafting_speed = 1,
+    crafting_speed = 0.5,
     ingredient_count = 1,
     module_slots = 0,
     allowed_effects = {},
@@ -149,7 +149,7 @@ local function transmuter_recipe(result_name, result_type, result_amount)
         name = "omega-transmute-" .. result_name,
         categories = {"omega-transmuter"},
         enabled = true,
-        energy_required = 10,
+        energy_required = 5,
         ingredients = {{
             type = "fluid",
             name = "omega-fluid",
