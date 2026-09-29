@@ -146,4 +146,4 @@ script.on_event(defines.events.on_chunk_generated, function(event)
   end
 end)
 
-require("omega-pid.lua")
+require("omega-pid")
