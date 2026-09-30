@@ -1,29 +1,29 @@
 -- omega-pid.lua  (require("omega-pid") from control.lua)
 
 local CONFIG = {
-  recipe_name = "omega-recipe-placeholder",
-}
-CONFIG.recipe_name = "omega-output"
+  recipe_name  = "omega-output",
+  fluid_name   = "omega-fluid",
+  machine_name = "omega-machine",  -- rename to match your prototype
 
-CONFIG.fluid_name      = "omega-fluid"
-CONFIG.base_rate       = 10     -- fluid/s at 0% bonus
-CONFIG.step            = 0.01   -- +/-1% per update
-CONFIG.interval        = 600    -- ticks between updates (10 s)
-CONFIG.window_samples  = 60     -- 60 x 10 s = 10 minutes
-CONFIG.buffer_target   = 1.05   -- keep supply at 105% of consumption
-CONFIG.buffer_entities = { "omega-machine" } -- add "storage-tank" if wanted
+  step      = 0.01,   -- +/-1% per update
+  interval  = 60,     -- ticks between updates (1 s)
+
+  low_level  = 500,     -- level <= this counts as "empty"  -> raise bonus
+  high_level = 500,  -- level >  this counts as "backed up" -> lower bonus
+}
 
 ------------------------------------------------------------------------
--- State (persisted in `storage`)
+-- State (persisted in `storage`, created lazily)
 ------------------------------------------------------------------------
 local function get_state(force)
   storage.omega_pid = storage.omega_pid or { forces = {} }
   local s = storage.omega_pid.forces[force.index]
   if not s then
     s = {
-      mult = 1,          -- 1 + bonus
-      samples = {},      -- each: { potential = fluid, stock = fluid }
-      consumed = 0, supply = 0, starved = false,
+      mult = 1,        -- 1 + bonus
+      level = 0,       -- average omega-fluid per machine, last reading
+      machines = 0,
+      action = "hold",
     }
     storage.omega_pid.forces[force.index] = s
   end
@@ -31,88 +31,72 @@ local function get_state(force)
 end
 
 ------------------------------------------------------------------------
--- Measurements
+-- Read the output level of every omega-machine, grouped by force index
 ------------------------------------------------------------------------
-local function consumed_last_10min(force)
-  local total = 0
+local function read_levels()
+  local totals = {}  -- [force_index] = { sum = fluid, count = machines }
   for _, surface in pairs(game.surfaces) do
-    local stats = force.get_fluid_production_statistics(surface)
-    if stats and stats.valid then
-      total = total + stats.get_flow_count{
-        name = CONFIG.fluid_name, category = "input",
-        precision_index = defines.flow_precision_index.ten_minutes,
-        count = true,
-      }
+    for _, e in pairs(surface.find_entities_filtered{ name = CONFIG.machine_name }) do
+      local t = totals[e.force.index]
+      if not t then
+        t = { sum = 0, count = 0 }
+        totals[e.force.index] = t
+      end
+      t.sum = t.sum + (e.get_fluid_contents()[CONFIG.fluid_name] or 0)
+      t.count = t.count + 1
     end
   end
-  return total
-end
-
-local function stored_fluid(force)
-  local total = 0
-  for _, surface in pairs(game.surfaces) do
-    local entities = surface.find_entities_filtered{
-      name = CONFIG.buffer_entities, force = force,
-    }
-    for _, e in pairs(entities) do
-      total = total + (e.get_fluid_contents()[CONFIG.fluid_name] or 0)
-    end
-  end
-  return total
+  return totals
 end
 
 ------------------------------------------------------------------------
--- Update (every 10 s)
+-- Update (every second)
 ------------------------------------------------------------------------
-local function update_force(force)
-  local recipe = force.recipes[CONFIG.recipe_name]
-  if not recipe then return end
-  local s = get_state(force)
+local function update()
+  local totals = read_levels()
 
-  -- 1. Log what the machine could produce in the last 10 s, plus current stock.
-  local seconds = CONFIG.interval / 60
-  table.insert(s.samples, {
-    potential = CONFIG.base_rate * s.mult * seconds,
-    stock = stored_fluid(force),
-  })
-  while #s.samples > CONFIG.window_samples do
-    table.remove(s.samples, 1)
-  end
-
-  -- 2. Supply over the window = potential production + backlog at window start.
-  local potential = 0
-  for _, smp in ipairs(s.samples) do potential = potential + smp.potential end
-  local supply = potential + s.samples[1].stock
-  local consumed = consumed_last_10min(force)
-
-  s.consumed, s.supply = consumed, supply
-
-  -- 3. Target: supply should be 5% above consumption.
-  s.starved = supply < CONFIG.buffer_target * consumed
-  if s.starved then
-    s.mult = s.mult * (1 + CONFIG.step)
-  else
-    s.mult = s.mult * (1 - CONFIG.step)
-  end
-  s.mult = math.max(1, s.mult)  -- floor at 0% bonus, no upper cap
-
-  recipe.productivity_bonus = s.mult - 1
-end
-
-script.on_nth_tick(CONFIG.interval, function()
   for _, force in pairs(game.forces) do
-    update_force(force)
-  end
-end)
+    local recipe = force.recipes[CONFIG.recipe_name]
+    if recipe then
+      local s = get_state(force)
+      local t = totals[force.index]
 
+      if t and t.count > 0 then
+        local level = t.sum / t.count   -- average, so multiple machines still work
+        s.level, s.machines = level, t.count
+
+        if level <= CONFIG.low_level then
+          s.action = "RAISING"
+          s.mult = s.mult * (1 + CONFIG.step)
+        elseif level > CONFIG.high_level then
+          s.action = "LOWERING"
+          s.mult = s.mult * (1 - CONFIG.step)
+        else
+          s.action = "hold"
+        end
+        s.mult = math.max(1, s.mult)   -- floor at +0%, no upper cap
+      else
+        s.machines, s.action = 0, "no machine"
+      end
+
+      -- Written every update so reloads / recipe resets self-heal.
+      recipe.productivity_bonus = s.mult - 1
+    end
+  end
+end
+
+script.on_nth_tick(CONFIG.interval, update)
+
+------------------------------------------------------------------------
+-- Debug: /omega-pid
+------------------------------------------------------------------------
 commands.add_command("omega-pid", "Show omega controller state", function(cmd)
   local player = game.get_player(cmd.player_index)
   if not player then return end
   local s = get_state(player.force)
   player.print(string.format(
-    "[omega] bonus=%+.1f%% output=%.1f/s consumed(10m)=%.0f supply(10m)=%.0f target=%.0f starved=%s",
-    (s.mult - 1) * 100, CONFIG.base_rate * s.mult, s.consumed, s.supply,
-    CONFIG.buffer_target * s.consumed, tostring(s.starved)))
+    "[omega] bonus=%+.1f%% output=%.1f/s level=%.0f machines=%d -> %s",
+    (s.mult - 1) * 100, 10 * s.mult, s.level, s.machines, s.action))
 end)
 
 return {}

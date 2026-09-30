@@ -61,7 +61,7 @@ local function setup_player(player)
 
   local main_inventory = player.get_inventory(defines.inventory.character_main)
   if main_inventory then
-    main_inventory.insert({name = "omega-transmuter", count = 1})
+    main_inventory.insert({name = "omega-transmuter", count = 10})
     main_inventory.insert({name = "coal", count = 1})
   end
 
