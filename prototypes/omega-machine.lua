@@ -133,7 +133,7 @@ local omega_recipe = {
     results = {{
         type = "fluid",
         name = "omega-fluid",
-        amount = 100
+        amount = 1000
     }},
     icon = omega_fluid_icon,
     icon_size = 64,

@@ -5,11 +5,11 @@ local CONFIG = {
   fluid_name   = "omega-fluid",
   machine_name = "omega-machine",  -- rename to match your prototype
 
-  step      = 0.01,   -- +/-1% per update
-  interval  = 60,     -- ticks between updates (1 s)
+  step      = 0.01,   -- +/-% per update
+  interval  = 600,   -- ticks between updates
 
-  low_level  = 500,     -- level <= this counts as "empty"  -> raise bonus
-  high_level = 500,  -- level >  this counts as "backed up" -> lower bonus
+  low_level  = 450,  -- level <= this counts as "empty"  -> raise bonus
+  high_level = 550,  -- level >  this counts as "backed up" -> lower bonus
 }
 
 ------------------------------------------------------------------------
@@ -68,7 +68,7 @@ local function update()
         if level <= CONFIG.low_level then
           s.action = "RAISING"
           s.mult = s.mult * (1 + CONFIG.step)
-        elseif level > CONFIG.high_level then
+        elseif level >= CONFIG.high_level then
           s.action = "LOWERING"
           s.mult = s.mult * (1 - CONFIG.step)
         else
