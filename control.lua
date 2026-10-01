@@ -82,8 +82,32 @@ local function disable_freeplay_gifts()
   pcall(function() remote.call("freeplay", "set_respawn_items", {}) end)
 end
 
+local function disable_restricted_machines()
+  local entity_names = {"burner-mining-drill", "electric-mining-drill", "offshore-pump", "pumpjack"}
+
+  for _, force in pairs(game.forces) do
+    for _, name in ipairs(entity_names) do
+      local recipe = force.recipes[name]
+      if recipe then
+        recipe.enabled = false
+      end
+    end
+  end
+
+  for _, surface in pairs(game.surfaces) do
+    local entities = surface.find_entities_filtered({name = entity_names})
+    for _, entity in pairs(entities) do
+      if entity.valid then
+        entity.active = false
+        entity.minable_flag = false
+      end
+    end
+  end
+end
+
 script.on_init(function()
   disable_freeplay_gifts()
+  disable_restricted_machines()
 
   for _, surface in pairs(game.surfaces) do
     prepare_surface(surface)
@@ -102,6 +126,7 @@ end)
 
 script.on_configuration_changed(function(event)
   disable_freeplay_gifts()
+  disable_restricted_machines()
 
   -- Only reset players on a fresh install of this mod, not on every version bump/reload.
   local changes = event and event.mod_changes and event.mod_changes["omega"]
@@ -124,18 +149,26 @@ script.on_event(defines.events.on_player_created, function(event)
   setup_player(player)
 end)
 
+local ISLAND_HALF = 20
+
 script.on_event(defines.events.on_chunk_generated, function(event)
   local surface = event.surface
   local area = event.area
+  local void_island_mode = settings.startup["omega-void-island-mode"].value
 
   local tiles = {}
   for x = area.left_top.x, area.right_bottom.x - 1 do
     for y = area.left_top.y, area.right_bottom.y - 1 do
-      table.insert(tiles, {name = "grass-1", position = {x, y}})
+      local tile_name = "grass-1"
+      if void_island_mode and (x < -ISLAND_HALF or x > ISLAND_HALF or y < -ISLAND_HALF or y > ISLAND_HALF) then
+        tile_name = "omega-void"
+      end
+      table.insert(tiles, {name = tile_name, position = {x, y}})
     end
   end
 
-  surface.set_tiles(tiles, false, true, true)
+  -- correct_tiles = true so the engine draws the grass -> void shoreline transition (the 3D edge).
+  surface.set_tiles(tiles, true, true, true)
   surface.destroy_decoratives({area = area})
 
   local entities = surface.find_entities_filtered({area = area})
