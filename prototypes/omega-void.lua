@@ -5,9 +5,14 @@ omega_void.fluid = nil
 omega_void.map_color = {r = 0, g = 0, b = 0}
 omega_void.effect_color = {r = 0, g = 0, b = 0, a = 1}
 omega_void.effect_color_secondary = {r = 0, g = 0, b = 0, a = 1}
-omega_void.tint = {r = 0, g = 0, b = 0, a = 1}
 
 data:extend({omega_void})
+
+-- Register as a water tile so the engine draws the grass -> void shoreline edge
+-- (the "island" look), exactly like the VoidBlock reference does for its ocean.
+if water_tile_type_names then
+  table.insert(water_tile_type_names, "omega-void")
+end
 
 local landfill = data.raw.item.landfill
 if landfill and landfill.place_as_tile and landfill.place_as_tile.tile_condition then
