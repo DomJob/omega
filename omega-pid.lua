@@ -5,11 +5,11 @@ local CONFIG = {
   fluid_name   = "omega-fluid",
   machine_name = "omega-machine",  -- rename to match your prototype
 
-  step      = 0.01,   -- +/-% per update
-  interval  = 600,   -- ticks between updates
+  interval  = 60,   -- ticks between updates
 
-  low_level  = 450,  -- level <= this counts as "empty"  -> raise bonus
-  high_level = 550,  -- level >  this counts as "backed up" -> lower bonus
+  -- Max per-update adjustment: +N at level 0, 0 at target_level, -N at 2*target_level.
+  N            = 0.001,
+  target_level = 500,
 }
 
 ------------------------------------------------------------------------
@@ -65,15 +65,10 @@ local function update()
         local level = t.sum / t.count   -- average, so multiple machines still work
         s.level, s.machines = level, t.count
 
-        if level <= CONFIG.low_level then
-          s.action = "RAISING"
-          s.mult = s.mult * (1 + CONFIG.step)
-        elseif level >= CONFIG.high_level then
-          s.action = "LOWERING"
-          s.mult = s.mult * (1 - CONFIG.step)
-        else
-          s.action = "hold"
-        end
+        -- Proportional step: +N at level 0, 0 at target, -N at 2*target.
+        local adjust = CONFIG.N * (1 - level / CONFIG.target_level)
+        s.action = adjust > 0 and "RAISING" or (adjust < 0 and "LOWERING" or "hold")
+        s.mult = s.mult * (1 + adjust)
         s.mult = math.max(1, s.mult)   -- floor at +0%, no upper cap
       else
         s.machines, s.action = 0, "no machine"

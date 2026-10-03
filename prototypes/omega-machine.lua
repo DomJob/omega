@@ -126,14 +126,14 @@ local omega_recipe = {
     categories = {"omega"},
     enabled = true,
     hidden = true,
-    energy_required = 10,
+    energy_required = 1,
     allow_productivity = true,
     maximum_productivity = 100000000,
     ingredients = {},
     results = {{
         type = "fluid",
         name = "omega-fluid",
-        amount = 1000
+        amount = 100
     }},
     icon = omega_fluid_icon,
     icon_size = 64,

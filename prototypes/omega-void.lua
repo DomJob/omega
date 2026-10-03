@@ -18,3 +18,16 @@ local landfill = data.raw.item.landfill
 if landfill and landfill.place_as_tile and landfill.place_as_tile.tile_condition then
   table.insert(landfill.place_as_tile.tile_condition, "omega-void")
 end
+
+local landfill_recipe = data.raw.recipe.landfill
+if landfill_recipe then
+  if settings.startup["omega-void-island-mode"].value then
+    landfill_recipe.enabled = true
+    landfill_recipe.ingredients = {{type = "item", name = "stone", amount = 20}}
+    landfill_recipe.results = {{type = "item", name = "landfill", amount = 1}}
+  else
+    landfill_recipe.enabled = false
+    landfill_recipe.hidden = true
+    landfill_recipe.hide_from_player_crafting = true
+  end
+end
